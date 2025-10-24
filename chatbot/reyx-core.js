@@ -1,45 +1,27 @@
-// reyx-core.js
-// ⚡ Núcleo central del ecosistema de bots de ReyX (WhatsApp, Telegram, Web)
+// chatbot/reyx-core.js
+import { getUserMemory, saveToMemory } from "./reyx-memory.js";
+import { askGemini } from "./reyx-utils.js";
 
-import axios from "axios";
+export async function processMessage(mensaje, numero) {
+  const historial = await getUserMemory(numero);
+  const contexto = historial.map(h => `${h.sender}: ${h.text}`).join("\n");
 
-// 💬 Procesa los mensajes recibidos y decide la respuesta
-export async function processMessage(text, sender) {
-  try {
-    const msg = text.toLowerCase().trim();
+  const prompt = `
+Eres TITAN IA ⚡, el asistente oficial de ReyX. 
+Recuerda las conversaciones previas y ayuda al usuario en todo momento.
+Puedes manejar citas, responder dudas sobre ReyX, TITAN IA y ayudar a clientes.
 
-    // 🔹 Respuestas instantáneas
-    if (msg.includes("hola") || msg.includes("buenas")) {
-      return `⚡ Hola ${sender || ""}! Soy TITAN IA de ReyX. Estoy aquí para ayudarte 🚀`;
-    }
+Conversación previa:
+${contexto}
 
-    if (msg.includes("quién eres") || msg.includes("que eres")) {
-      return "Soy TITAN IA ⚡, un bot inteligente de ReyX diseñado para automatizar y mejorar la atención de tu negocio 💼.";
-    }
+Usuario (${numero}): ${mensaje}
+Asistente:
+`;
 
-    if (msg.includes("web") || msg.includes("página")) {
-      return "🌐 Conoce más del universo ReyX en https://reyx-global.vercel.app 🌍";
-    }
+  const respuesta = await askGemini(prompt);
 
-    // 🔸 Si no hay coincidencia directa, se conecta con TITAN IA
-    const aiResponse = await connectTitanIA(msg);
-    return aiResponse || "🤔 No logré entenderte del todo, ¿puedes explicarlo de otra forma?";
-  } catch (err) {
-    console.error("❌ Error en processMessage:", err.message);
-    return "⚠️ Ocurrió un error procesando tu mensaje.";
-  }
-}
+  await saveToMemory(numero, { sender: "user", text: mensaje });
+  await saveToMemory(numero, { sender: "bot", text: respuesta });
 
-// 🧠 Conecta con TITAN IA (tu backend principal)
-async function connectTitanIA(prompt) {
-  try {
-    const response = await axios.post("https://titan-ia-production.up.railway.app/api/reyx-m", {
-      message: prompt,
-      sender: "ReyX-WhatsApp",
-    });
-    return response.data.reply || response.data.response || "⚡ Respuesta generada por TITAN IA.";
-  } catch (err) {
-    console.error("❌ Error al conectar con TITAN IA:", err.message);
-    return null;
-  }
+  return respuesta;
 }

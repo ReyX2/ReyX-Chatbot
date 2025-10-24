@@ -5,7 +5,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import axios from "axios";
-import { processMessage } from "./reyx-core.js"; // 👈 Importamos el cerebro inteligente
+import { processMessage } from "./chatbot/reyx-core.js";
 
 dotenv.config();
 const app = express();

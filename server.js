@@ -5,7 +5,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { iniciarServidorReyX } from "./chatbot/reyx-core.js"; // ✅ Solo se llama a la función central
+import { iniciarServidorReyX } from "./chatbot/reyx-core.js"; 
 
 // 🔹 Cargar variables del entorno (.env)
 dotenv.config();

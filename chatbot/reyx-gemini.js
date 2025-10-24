@@ -3,8 +3,10 @@ import axios from "axios";
 
 export async function generateResponse(prompt) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // ⚡ Usa el mismo modelo de TITAN IA
+    const GEMINI_MODEL = "gemini-2.5-flash-lite";
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
     const body = {
       contents: [
@@ -15,13 +17,22 @@ export async function generateResponse(prompt) {
       ],
     };
 
-    const { data } = await axios.post(url, body);
+    const { data } = await axios.post(GEMINI_API_URL, body, {
+      headers: { "Content-Type": "application/json" },
+    });
+
     const text =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "🤖 No se obtuvo respuesta.";
+      "🤖 No se obtuvo respuesta de TITAN IA.";
+
     return text;
   } catch (error) {
-    console.error("❌ Error en Gemini:", error.message);
-    return "⚠️ No se pudo conectar con la IA.";
+    console.error(
+      "❌ Error en Gemini:",
+      error.response?.status || error.message
+    );
+
+    // 🧠 Mensaje humano cuando la API falla
+    return "⚙️ TITAN IA está procesando muchas solicitudes ahora. Inténtalo de nuevo en unos minutos ⚡";
   }
 }

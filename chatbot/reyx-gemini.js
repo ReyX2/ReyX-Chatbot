@@ -16,7 +16,9 @@ export async function generateResponse(prompt) {
     };
 
     const { data } = await axios.post(url, body);
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "🤖 No se obtuvo respuesta.";
+    const text =
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "🤖 No se obtuvo respuesta.";
     return text;
   } catch (error) {
     console.error("❌ Error en Gemini:", error.message);

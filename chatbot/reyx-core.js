@@ -22,15 +22,18 @@ export function iniciarServidorReyX(app) {
 
       const respuesta = await processMessage(mensaje, numero);
 
+      // ✅ Limpiar número (sin @c.us)
+      const cleanNumber = numero.replace("@c.us", "");
+
       // 📤 Enviar la respuesta al usuario por UltraMsg
       const url = `https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`;
       await axios.post(url, {
         token: process.env.ULTRAMSG_TOKEN,
-        to: numero,
+        to: cleanNumber,
         body: respuesta,
       });
 
-      console.log("✅ Respuesta enviada a", numero);
+      console.log("✅ Respuesta enviada a", cleanNumber);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error("❌ Error procesando mensaje:", error.message);
@@ -43,7 +46,6 @@ export function iniciarServidorReyX(app) {
 export async function processMessage(text, sender) {
   try {
     const msg = text.toLowerCase().trim();
-
     const memory = await getUserMemory(sender);
     await saveMessage(sender, "usuario", msg);
 
@@ -88,7 +90,7 @@ async function responder(user, text) {
 // 📞 Notificación automática al CEO
 async function notificarCEO(mensaje) {
   try {
-    const ceoNumber = process.env.CEO_NUMBER;
+    const ceoNumber = process.env.CEO_NUMBER.replace("@c.us", "");
     const url = `https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`;
     await axios.post(url, {
       token: process.env.ULTRAMSG_TOKEN,

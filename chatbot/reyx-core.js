@@ -1,53 +1,45 @@
-// server.js
-// ⚡ Servidor principal del ReyX Chatbot (WhatsApp con UltraMsg + ReyX-Core)
+// reyx-core.js
+// ⚡ Núcleo central del ecosistema de bots de ReyX (WhatsApp, Telegram, Web)
 
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
 import axios from "axios";
-import { processMessage } from "./chatbot/reyx-core.js";
 
-dotenv.config();
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-// 🧠 Verificación rápida para saber si el backend está vivo
-app.get("/", (req, res) => {
-  res.send("🚀 Servidor ReyX Chatbot activo y conectado con TITAN IA ⚡");
-});
-
-// 📩 Webhook que recibe los mensajes de WhatsApp desde UltraMsg
-app.post("/api/whatsapp/webhook", async (req, res) => {
+// 💬 Procesa los mensajes recibidos y decide la respuesta
+export async function processMessage(text, sender) {
   try {
-    const data = req.body;
-    const mensaje = data?.data?.body || "";
-    const numero = data?.data?.from || "";
+    const msg = text.toLowerCase().trim();
 
-    console.log("📥 Mensaje recibido:", mensaje, "de", numero);
+    // 🔹 Respuestas instantáneas
+    if (msg.includes("hola") || msg.includes("buenas")) {
+      return `⚡ Hola ${sender || ""}! Soy TITAN IA de ReyX. Estoy aquí para ayudarte 🚀`;
+    }
 
-    // 🧠 Procesar el mensaje con el núcleo de inteligencia
-    const respuesta = await processMessage(mensaje, numero);
+    if (msg.includes("quién eres") || msg.includes("que eres")) {
+      return "Soy TITAN IA ⚡, un bot inteligente de ReyX diseñado para automatizar y mejorar la atención de tu negocio 💼.";
+    }
 
-    // 📤 Enviar la respuesta al usuario por UltraMsg
-    const url = `https://api.ultramsg.com/${process.env.ULTRAMSG_INSTANCE_ID}/messages/chat`;
+    if (msg.includes("web") || msg.includes("página")) {
+      return "🌐 Conoce más del universo ReyX en https://reyx-global.vercel.app 🌍";
+    }
 
-    await axios.post(url, {
-      token: process.env.ULTRAMSG_TOKEN,
-      to: numero,
-      body: respuesta,
-    });
-
-    console.log("✅ Respuesta enviada a", numero);
-    res.status(200).json({ success: true });
-  } catch (error) {
-    console.error("❌ Error procesando mensaje:", error.message);
-    res.status(500).json({ success: false, error: error.message });
+    // 🔸 Si no hay coincidencia directa, se conecta con TITAN IA
+    const aiResponse = await connectTitanIA(msg);
+    return aiResponse || "🤔 No logré entenderte del todo, ¿puedes explicarlo de otra forma?";
+  } catch (err) {
+    console.error("❌ Error en processMessage:", err.message);
+    return "⚠️ Ocurrió un error procesando tu mensaje.";
   }
-});
+}
 
-// 🚀 Iniciar servidor
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => console.log(`🔥 Servidor activo en el puerto ${PORT}`));
+// 🧠 Conecta con TITAN IA (tu backend principal)
+async function connectTitanIA(prompt) {
+  try {
+    const response = await axios.post("https://titan-ia-production.up.railway.app/api/reyx-m", {
+      message: prompt,
+      sender: "ReyX-WhatsApp",
+    });
+    return response.data.reply || response.data.response || "⚡ Respuesta generada por TITAN IA.";
+  } catch (err) {
+    console.error("❌ Error al conectar con TITAN IA:", err.message);
+    return null;
+  }
+}
